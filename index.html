@@ -1,0 +1,27 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow,noarchive"/><meta name="referrer" content="no-referrer"/>
+<title>Private Relationship Atlas</title><style>
+:root{color-scheme:light;font-family:Inter,-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif}*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#ecf2ef,#f8f6f6);color:#193740;min-height:100vh}.wrap{min-height:100vh;display:grid;place-items:center;padding:24px}.panel{width:min(460px,100%);background:#fff;padding:38px;border-radius:22px;border:1px solid #dde8e4;box-shadow:0 26px 65px #12394012}.label{font-size:11px;color:#69858a;letter-spacing:2px;font-weight:750}.glyph{font:52px Georgia,serif;color:#204950;margin:12px 0}.panel h1{font:500 30px Georgia,'Noto Serif TC',serif;margin:0 0 10px}.panel p{color:#61777d;line-height:1.9;font-size:14px}.pass{display:flex;gap:8px;margin:25px 0 12px}input{flex:1;min-width:0;border:1px solid #cad8d5;border-radius:10px;padding:14px 15px;font-size:16px;color:#173b42;outline:0}input:focus{border-color:#2b7d83}button{background:#285e64;border:0;border-radius:10px;color:#fff;padding:13px 17px;font-weight:700;cursor:pointer}button:hover{background:#1c454c}button:disabled{opacity:.5}.tip{margin-top:18px;font-size:12px;line-height:1.8;color:#849598}.error{color:#a53c51;font-size:13px;min-height:20px}.reader{height:100vh;display:none}.reader iframe{height:100%;width:100%;border:0;background:#fff}.reader .bar{height:47px;background:#17313b;color:#d2e8e7;display:flex;align-items:center;justify-content:space-between;padding:0 15px;font-size:12px}.reader .bar button{background:#315c62;padding:5px 12px;font-size:12px}.reader iframe{height:calc(100vh - 47px)}
+@media(max-width:600px){.panel{padding:26px 24px}.pass{flex-direction:column}.pass button{width:100%}}
+</style></head><body>
+<main id="login" class="wrap"><section class="panel"><div class="label">ENCRYPTED · PRIVATE ATLAS</div><div class="glyph">∞</div><h1>Only for us.</h1><p>這是一份受密碼保護的私人互動報告。輸入專屬密碼後，資料會直接在你的瀏覽器內解密，完整內容不會傳送到其他伺服器。</p><form id="unlock" class="pass"><input id="pass" type="password" placeholder="輸入專屬解鎖密碼" autocomplete="off" required/><button id="go" type="submit">解鎖報告</button></form><div class="error" id="error" role="status" aria-live="polite"></div><div class="tip">網站公開提供的只有加密檔案；請不要把密碼放在 GitHub、公開貼文或網站原始碼。離開或重新整理後，需要再次解鎖。</div></section></main>
+<section class="reader" id="reader"><div class="bar"><span>PRIVATE REPORT · 已在此裝置解鎖</span><button id="lock">鎖定</button></div><iframe id="frame" referrerpolicy="no-referrer" title="私人互動關係報告"></iframe></section>
+<script>
+'use strict';const SALT='T7Rs+CwyZzSzaoBVeYYokg==',IV='BWe122yD6/Tg7oPj',ITER=420000,AAD='private-relationship-atlas-v2';
+let blobUrl=null;const $=id=>document.getElementById(id);const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+$('unlock').addEventListener('submit',async e=>{
+ e.preventDefault();const pass=$('pass').value;$('pass').value='';$('error').textContent='';$('go').disabled=true;$('go').textContent='解密中…';
+ try{
+  if(!globalThis.crypto?.subtle)throw new Error('請使用 HTTPS 網址或支援安全加密的瀏覽器。');
+  const keyRaw=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:from64(SALT),iterations:ITER,hash:'SHA-256'},keyRaw,{name:'AES-GCM',length:256},false,['decrypt']);
+  const resp=await fetch('./payload.bin',{cache:'no-store'});if(!resp.ok)throw new Error('讀取加密資料失敗：'+resp.status);
+  const enc=await resp.arrayBuffer();
+  const out=await crypto.subtle.decrypt({name:'AES-GCM',iv:from64(IV),additionalData:new TextEncoder().encode(AAD),tagLength:128},key,enc);
+  blobUrl=URL.createObjectURL(new Blob([out],{type:'text/html;charset=utf-8'}));
+  $('login').style.display='none';$('reader').style.display='block';$('frame').src=blobUrl;
+ }catch(e){$('error').textContent=e?.message?.startsWith('讀取')?e.message:'密碼不正確，或無法解密資料。請確認密碼、網址與瀏覽器。';}
+ finally{$('go').disabled=false;$('go').textContent='解鎖報告';}
+});
+$('lock').addEventListener('click',()=>{$('frame').src='about:blank';if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl=null;$('login').style.display='grid';$('reader').style.display='none';});
+</script></body></html>
