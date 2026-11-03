@@ -3,25 +3,144 @@
 <title>Private Relationship Atlas</title><style>
 :root{color-scheme:light;font-family:Inter,-apple-system,BlinkMacSystemFont,'Noto Sans TC','PingFang TC',sans-serif}*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#ecf2ef,#f8f6f6);color:#193740;min-height:100vh}.wrap{min-height:100vh;display:grid;place-items:center;padding:24px}.panel{width:min(460px,100%);background:#fff;padding:38px;border-radius:22px;border:1px solid #dde8e4;box-shadow:0 26px 65px #12394012}.label{font-size:11px;color:#69858a;letter-spacing:2px;font-weight:750}.glyph{font:52px Georgia,serif;color:#204950;margin:12px 0}.panel h1{font:500 30px Georgia,'Noto Serif TC',serif;margin:0 0 10px}.panel p{color:#61777d;line-height:1.9;font-size:14px}.pass{display:flex;gap:8px;margin:25px 0 12px}input{flex:1;min-width:0;border:1px solid #cad8d5;border-radius:10px;padding:14px 15px;font-size:16px;color:#173b42;outline:0}input:focus{border-color:#2b7d83}button{background:#285e64;border:0;border-radius:10px;color:#fff;padding:13px 17px;font-weight:700;cursor:pointer}button:hover{background:#1c454c}button:disabled{opacity:.5}.tip{margin-top:18px;font-size:12px;line-height:1.8;color:#849598}.error{color:#a53c51;font-size:13px;min-height:20px}.reader{height:100vh;display:none}.reader iframe{height:100%;width:100%;border:0;background:#fff}.reader .bar{height:47px;background:#17313b;color:#d2e8e7;display:flex;align-items:center;justify-content:space-between;padding:0 15px;font-size:12px}.reader .bar button{background:#315c62;padding:5px 12px;font-size:12px}.reader iframe{height:calc(100vh - 47px)}
 @media(max-width:600px){.panel{padding:26px 24px}.pass{flex-direction:column}.pass button{width:100%}}
+
+.reader .bar .tools{display:flex;gap:8px;align-items:center}
+.modal{position:fixed;z-index:50;inset:0;background:#142e36af;display:none;place-items:center;padding:16px;overflow-y:auto}
+.modal.active{display:grid}
+.modal .panel{width:min(540px,100%);max-height:95vh;overflow-y:auto}
+.modal h2{font-size:24px;font-weight:650;margin:10px 0 4px}
+.modal label{display:block;margin-top:15px;font-size:13px;font-weight:650;color:#37565d}
+.modal input{width:100%;margin-top:6px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.modal .secondary{background:#e8efed;color:#254f56}
+.modal .notice{padding:13px 15px;border-radius:10px;background:#f5f2e9;font-size:13px;line-height:1.75;color:#634e2c}
+.modal .steps{margin:12px 0;padding:12px 16px;background:#f0f5f3;border-radius:10px;font-size:13px;line-height:1.75}
+.modal .steps a{color:#205d69;word-break:break-all}
+.modal .msg{font-size:13px;color:#20564b;min-height:20px}
+@media(max-width:600px){.reader .bar{height:52px;font-size:10px}.reader iframe{height:calc(100vh - 52px)}.modal .actions{flex-direction:column-reverse}.modal .actions button{width:100%}}
 </style></head><body>
 <main id="login" class="wrap"><section class="panel"><div class="label">ENCRYPTED · PRIVATE ATLAS</div><div class="glyph">∞</div><h1>Only for us.</h1><p>這是一份受密碼保護的私人互動報告。輸入專屬密碼後，資料會直接在你的瀏覽器內解密，完整內容不會傳送到其他伺服器。</p><form id="unlock" class="pass"><input id="pass" type="password" placeholder="輸入專屬解鎖密碼" autocomplete="off" required/><button id="go" type="submit">解鎖報告</button></form><div class="error" id="error" role="status" aria-live="polite"></div><div class="tip">網站公開提供的只有加密檔案；請不要把密碼放在 GitHub、公開貼文或網站原始碼。離開或重新整理後，需要再次解鎖。</div></section></main>
-<section class="reader" id="reader"><div class="bar"><span>PRIVATE REPORT · 已在此裝置解鎖</span><button id="lock">鎖定</button></div><iframe id="frame" referrerpolicy="no-referrer" title="私人互動關係報告"></iframe></section>
+<section class="reader" id="reader"><div class="bar"><span>PRIVATE REPORT · 已在此裝置解鎖</span><div class="tools"><button id="openSettings" type="button">設定／更換密碼</button><button id="lock" type="button">鎖定</button></div></div><iframe id="frame" referrerpolicy="no-referrer" title="私人互動關係報告"></iframe></section>
+<div class="modal" id="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <section class="panel">
+    <div class="label">SECURITY SETTINGS</div>
+    <h2 id="settingsTitle">更換解鎖密碼</h2>
+    <p>在這個瀏覽器內，用新密碼重新加密已解鎖的完整報告。密碼不會送出或儲存到 GitHub。</p>
+    <div class="notice"><strong>注意：</strong>產生新密碼後，必須把下載的 <code>payload.bin</code> 上傳並覆蓋 GitHub 的同名檔案，線上網站才會改用新密碼。GitHub 歷史版本可能仍保留舊密文，舊密碼不能視為已完全撤銷。</div>
+    <form id="rekey">
+      <label for="newPass">新密碼（至少 16 個字元，建議使用密碼管理器產生 24 位以上隨機密碼）</label>
+      <input id="newPass" type="password" minlength="16" autocomplete="new-password" required>
+      <label for="confirmPass">再次輸入新密碼</label>
+      <input id="confirmPass" type="password" minlength="16" autocomplete="new-password" required>
+      <div id="rekeyError" class="error" role="status" aria-live="polite"></div>
+      <div id="rekeyMsg" class="msg" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" class="secondary" id="closeSettings">關閉</button>
+        <button type="submit" id="downloadEncrypted">產生新加密檔案</button>
+      </div>
+    </form>
+    <div id="uploadInstructions" class="steps" hidden>
+      <strong>接下來要做的事：</strong>
+      <ol>
+        <li>保留剛下載的 <code>payload.bin</code> 與新密碼。</li>
+        <li>開啟 <a href="https://github.com/mm1990319/private-relationship-atlas" rel="noopener noreferrer" target="_blank">GitHub 儲存庫</a> → <em>Add file</em> → <em>Upload files</em>，上傳新的 <code>payload.bin</code> 並提交（Commit）。</li>
+        <li>待 Pages 更新後，開啟網站的無痕視窗，用新密碼測試成功，再淘汰目前的密碼。</li>
+      </ol>
+      <strong>不要</strong>上傳原始 LINE、未加密 HTML 或密碼，也不要在聊天裡傳送新密碼。
+    </div>
+  </section>
+</div>
 <script>
-'use strict';const SALT='T7Rs+CwyZzSzaoBVeYYokg==',IV='BWe122yD6/Tg7oPj',ITER=420000,AAD='private-relationship-atlas-v2';
-let blobUrl=null;const $=id=>document.getElementById(id);const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-$('unlock').addEventListener('submit',async e=>{
- e.preventDefault();const pass=$('pass').value;$('pass').value='';$('error').textContent='';$('go').disabled=true;$('go').textContent='解密中…';
+'use strict';
+const LEGACY_SALT='T7Rs+CwyZzSzaoBVeYYokg==', LEGACY_IV='BWe122yD6/Tg7oPj';
+const ITER=420000, AAD='private-relationship-atlas-v2';
+const MAGIC=new Uint8Array([82,65,84,50]); // "RAT2": 4 magic + 16 salt + 12 IV + AES-GCM ciphertext
+const $=id=>document.getElementById(id);
+const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const aadBytes=new TextEncoder().encode(AAD);
+let blobUrl=null, plainBuffer=null;
+async function derive(password,salt){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt,iterations:ITER,hash:'SHA-256'},
+    base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+function getPackage(data){
+ const bytes=new Uint8Array(data);
+ const modern=bytes.length>48 && MAGIC.every((v,i)=>bytes[i]===v);
+ return modern ?
+   {salt:bytes.slice(4,20),iv:bytes.slice(20,32),cipher:bytes.subarray(32)} :
+   {salt:from64(LEGACY_SALT),iv:from64(LEGACY_IV),cipher:bytes};
+}
+async function decryptPayload(password,data){
+ const part=getPackage(data), key=await derive(password,part.salt);
+ return crypto.subtle.decrypt({name:'AES-GCM',iv:part.iv,additionalData:aadBytes,tagLength:128},key,part.cipher);
+}
+async function encryptPayload(password,plaintext){
+ const salt=crypto.getRandomValues(new Uint8Array(16));
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const key=await derive(password,salt);
+ const ciphertext=new Uint8Array(await crypto.subtle.encrypt(
+  {name:'AES-GCM',iv,additionalData:aadBytes,tagLength:128},key,plaintext));
+ // Verify authentication and correct byte size before producing a deployable file
+ const check=await crypto.subtle.decrypt(
+  {name:'AES-GCM',iv,additionalData:aadBytes,tagLength:128},key,ciphertext);
+ if(check.byteLength!==plaintext.byteLength)throw new Error('加密驗證未通過');
+ const bundle=new Uint8Array(32+ciphertext.length);
+ bundle.set(MAGIC,0);bundle.set(salt,4);bundle.set(iv,20);bundle.set(ciphertext,32);
+ return bundle;
+}
+$('unlock').addEventListener('submit',async event=>{
+ event.preventDefault();const password=$('pass').value;$('pass').value='';
+ $('error').textContent='';$('go').disabled=true;$('go').textContent='解密中…';
  try{
-  if(!globalThis.crypto?.subtle)throw new Error('請使用 HTTPS 網址或支援安全加密的瀏覽器。');
-  const keyRaw=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
-  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:from64(SALT),iterations:ITER,hash:'SHA-256'},keyRaw,{name:'AES-GCM',length:256},false,['decrypt']);
-  const resp=await fetch('./payload.bin',{cache:'no-store'});if(!resp.ok)throw new Error('讀取加密資料失敗：'+resp.status);
-  const enc=await resp.arrayBuffer();
-  const out=await crypto.subtle.decrypt({name:'AES-GCM',iv:from64(IV),additionalData:new TextEncoder().encode(AAD),tagLength:128},key,enc);
-  blobUrl=URL.createObjectURL(new Blob([out],{type:'text/html;charset=utf-8'}));
+  if(!crypto?.subtle)throw new Error('請使用 HTTPS 網站或支援 Web Crypto 的瀏覽器。');
+  const res=await fetch('./payload.bin',{cache:'no-store'});
+  if(!res.ok)throw new Error('無法取得加密報告：HTTP '+res.status);
+  const encrypted=await res.arrayBuffer();
+  plainBuffer=await decryptPayload(password,encrypted);
+  if(blobUrl)URL.revokeObjectURL(blobUrl);
+  blobUrl=URL.createObjectURL(new Blob([plainBuffer],{type:'text/html;charset=utf-8'}));
   $('login').style.display='none';$('reader').style.display='block';$('frame').src=blobUrl;
- }catch(e){$('error').textContent=e?.message?.startsWith('讀取')?e.message:'密碼不正確，或無法解密資料。請確認密碼、網址與瀏覽器。';}
- finally{$('go').disabled=false;$('go').textContent='解鎖報告';}
+ }catch(e){
+  $('error').textContent=e.message.startsWith('無法取得')?e.message:'密碼錯誤或報告解密失敗，請確認密碼及網路連線。';
+ }finally{$('go').disabled=false;$('go').textContent='解鎖報告';}
 });
-$('lock').addEventListener('click',()=>{$('frame').src='about:blank';if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl=null;$('login').style.display='grid';$('reader').style.display='none';});
+function closeSettings(){
+ $('settings').classList.remove('active');$('newPass').value='';$('confirmPass').value='';
+ $('rekeyError').textContent='';$('rekeyMsg').textContent='';
+}
+$('openSettings').addEventListener('click',()=>{
+ if(!plainBuffer){$('error').textContent='請先解鎖報告';return;}
+ $('settings').classList.add('active');$('uploadInstructions').hidden=true;$('newPass').focus();
+});
+$('closeSettings').addEventListener('click',closeSettings);
+$('settings').addEventListener('click',e=>{if(e.target===$('settings'))closeSettings();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSettings();});
+$('rekey').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const password=$('newPass').value,confirmation=$('confirmPass').value;
+ $('rekeyError').textContent='';$('rekeyMsg').textContent='';
+ if(!plainBuffer){$('rekeyError').textContent='請重新解鎖報告。';return;}
+ if(password.length<16){$('rekeyError').textContent='新密碼至少需 16 個字元。';return;}
+ if(password!==confirmation){$('rekeyError').textContent='兩次輸入的密碼不同。';return;}
+ $('downloadEncrypted').disabled=true;$('downloadEncrypted').textContent='正在重新加密…';
+ try{
+  const data=await encryptPayload(password,plainBuffer);
+  const downloadUrl=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'}));
+  const a=document.createElement('a');a.href=downloadUrl;a.download='payload.bin';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(downloadUrl),30000);
+  $('newPass').value='';$('confirmPass').value='';
+  $('rekeyMsg').textContent='新的 payload.bin 已產生並開始下載。現在仍須手動更新 GitHub，線上密碼才會改變。';
+  $('uploadInstructions').hidden=false;
+ }catch(e){$('rekeyError').textContent='重新加密或下載發生錯誤，尚未變更線上密碼。';}
+ finally{$('downloadEncrypted').disabled=false;$('downloadEncrypted').textContent='產生新加密檔案';}
+});
+$('lock').addEventListener('click',()=>{
+ closeSettings();$('frame').src='about:blank';
+ if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl=null;
+ if(plainBuffer){new Uint8Array(plainBuffer).fill(0);plainBuffer=null;}
+ $('login').style.display='grid';$('reader').style.display='none';
+});
 </script></body></html>
